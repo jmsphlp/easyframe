@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="description" content="Add clean borders to your photos and videos without cropping. Free, fast, private — runs entirely in your browser." />
+
+  <!-- iOS PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="EasyFrame" />
+  <link rel="apple-touch-icon" href="/easyframe/icons/icon-180.png" />
+
+  <link rel="manifest" href="/easyframe/manifest.webmanifest" />
+  <link rel="icon" type="image/png" href="/easyframe/icons/icon-192.png" />
+
+  <title>EasyFrame — Borders without cropping</title>
+  <script type="module" crossorigin src="/easyframe/assets/index-BKp5kNG_.js"></script>
+  <link rel="stylesheet" crossorigin href="/easyframe/assets/index-CT42LQrq.css">
+</head>
+<body>
+  <nav class="navbar" aria-label="EasyFrame navigation">
+    <div class="nav-container">
+      <a href="#home" class="nav-logo" aria-label="EasyFrame home">EF</a>
+      <div class="nav-actions">
+        <span>Private border editor</span>
+        <button id="installBtn" class="nav-install" hidden>Install</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="app" id="home">
+    <!-- LANDING / EMPTY STATE -->
+    <section id="landing" class="landing">
+      <div class="landing-inner">
+        <p class="hero-greeting">No crop. No upload. No account.</p>
+        <h1 class="hero-name">EasyFrame</h1>
+        <h2 class="hero-title" aria-live="polite"><span id="typedText">Borders for photos and videos</span><span class="cursor" aria-hidden="true">|</span></h2>
+        <p class="hero-description">
+          Resize photos and videos for social posts by adding clean frames instead of cropping. Everything is processed privately on your device.
+        </p>
+
+        <div class="hero-buttons">
+          <label for="fileInput" class="btn btn-primary">
+            Choose photos or one video
+          </label>
+        </div>
+        <input id="fileInput" type="file" accept="image/*,video/*" multiple hidden />
+        <p id="landingStatus" class="landing-status" aria-live="polite"></p>
+
+        <ul class="feature-strip">
+          <li><strong>8 ratios</strong><span>Original, square, story, landscape</span></li>
+          <li><strong>Custom color</strong><span>Use presets or pick your own</span></li>
+          <li><strong>Batch photos</strong><span>Multiple images, one video at a time</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- EDITOR -->
+    <section id="editor" class="editor" hidden>
+      <div class="canvas-wrap">
+        <div class="canvas-stage">
+          <canvas id="previewCanvas"></canvas>
+          <video id="previewVideo" playsinline muted loop hidden></video>
+        </div>
+        <div id="batchPreview" class="batch-preview" hidden></div>
+        <button id="resetBtn" class="btn btn-secondary reset">Choose another</button>
+      </div>
+
+      <aside class="controls">
+        <div class="controls-header">
+          <p class="eyebrow">Studio</p>
+          <h2>Customize export</h2>
+          <p id="selectionSummary">Adjust the final canvas without cropping your original media.</p>
+        </div>
+
+        <div class="control-group">
+          <h3 class="control-label">Aspect ratio</h3>
+          <div class="ratio-grid" id="ratioGrid">
+            <button class="ratio-btn" data-ratio="original"><span class="ratio-icon ratio-original"></span><span>Original</span></button>
+            <button class="ratio-btn is-active" data-ratio="1:1"><span class="ratio-icon ratio-square"></span><span>1:1</span></button>
+            <button class="ratio-btn" data-ratio="4:5"><span class="ratio-icon ratio-four-five"></span><span>4:5</span></button>
+            <button class="ratio-btn" data-ratio="3:4"><span class="ratio-icon ratio-three-four"></span><span>3:4</span></button>
+            <button class="ratio-btn" data-ratio="9:16"><span class="ratio-icon ratio-nine-sixteen"></span><span>9:16</span></button>
+            <button class="ratio-btn" data-ratio="16:9"><span class="ratio-icon ratio-sixteen-nine"></span><span>16:9</span></button>
+            <button class="ratio-btn" data-ratio="3:2"><span class="ratio-icon ratio-three-two"></span><span>3:2</span></button>
+            <button class="ratio-btn" data-ratio="2:3"><span class="ratio-icon ratio-two-three"></span><span>2:3</span></button>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <h3 class="control-label">Border color</h3>
+          <div class="color-row">
+            <button class="swatch is-active" data-color="#ffffff" style="background:#ffffff" aria-label="White"></button>
+            <button class="swatch" data-color="#000000" style="background:#000000" aria-label="Black"></button>
+            <button class="swatch" data-color="#f5f1e8" style="background:#f5f1e8" aria-label="Cream"></button>
+            <button class="swatch" data-color="#1a1a1a" style="background:#1a1a1a" aria-label="Charcoal"></button>
+            <button class="swatch" data-color="#c44536" style="background:#c44536" aria-label="Red"></button>
+            <label class="swatch swatch-custom" aria-label="Custom color">
+              <input type="color" id="customColor" value="#ffffff" />
+              <span class="swatch-custom-glyph">+</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <h3 class="control-label">
+            Border size
+            <span class="value" id="borderValue">8%</span>
+          </h3>
+          <input type="range" id="borderSlider" min="0" max="40" value="8" class="slider" />
+        </div>
+
+        <div class="control-group">
+          <h3 class="control-label">Export quality</h3>
+          <div class="quality-grid" id="qualityGrid">
+            <button class="quality-btn" data-quality="high" type="button">
+              <strong>High</strong>
+              <span>PNG photos, larger video</span>
+            </button>
+            <button class="quality-btn is-active" data-quality="balanced" type="button">
+              <strong>Balanced</strong>
+              <span>Great quality, smaller files</span>
+            </button>
+            <button class="quality-btn" data-quality="small" type="button">
+              <strong>Smaller</strong>
+              <span>Faster sharing</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button id="exportBtn" class="btn btn-primary export-btn">
+            <span class="export-label">Export</span>
+            <span class="export-spinner" hidden></span>
+          </button>
+          <button id="shareBtn" class="btn btn-secondary" hidden>Share</button>
+        </div>
+
+        <p id="status" class="status" aria-live="polite"></p>
+      </aside>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>Designed for fast, private media framing.</p>
+    </div>
+  </footer>
+
+</body>
+</html>
