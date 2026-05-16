@@ -10,6 +10,7 @@ const state = {
   file: null,
   files: [],
   previewUrls: [],
+  sourceUrl: '',
   type: null,            // 'image' | 'video'
   source: null,          // HTMLImageElement | HTMLVideoElement
   ratio: '1:1',          // 'original' | 'W:H'
@@ -139,8 +140,10 @@ async function loadFile(file, files = [file]) {
     URL.revokeObjectURL(state.source.src);
   }
   clearPreviewUrls();
+  if (state.sourceUrl) URL.revokeObjectURL(state.sourceUrl);
 
   const url = URL.createObjectURL(file);
+  state.sourceUrl = url;
 
   if (isImage) {
     const img = new Image();
@@ -304,6 +307,7 @@ resetBtn.addEventListener('click', () => {
   state.file = null;
   state.files = [];
   state.source = null;
+  state.sourceUrl = '';
   state.type = null;
   canvasStage.style.setProperty('--preview-ratio', '1');
   selectionSummary.textContent = 'Adjust the final canvas without cropping your original media.';
@@ -463,11 +467,10 @@ async function renderImageBlob(image) {
 }
 
 async function exportVideo() {
-  const src = state.source;
+  const src = await createExportVideoElement();
   const srcW = src.videoWidth;
   const srcH = src.videoHeight;
   const frame = computeFrame(srcW, srcH);
-  const wasLooping = src.loop;
 
   setStatus('Encoding video…');
 
@@ -478,13 +481,13 @@ async function exportVideo() {
   out.height = frame.canvasH;
   const octx = out.getContext('2d');
 
-  // Audio from original
-  const audioTracks = src.captureStream ? src.captureStream().getAudioTracks() : [];
+  // Audio from a separate unmuted source. The preview video stays muted.
+  const sourceStream = src.captureStream ? src.captureStream() : null;
+  const audioTracks = sourceStream?.getAudioTracks() || [];
 
   // Restart video for clean export pass. Setting currentTime to 0 while already
   // at 0 does not always fire seeked, so only wait when a seek is needed.
   src.pause();
-  src.loop = false;
   if (src.currentTime > 0.05) {
     await seekVideo(src, 0);
   } else {
@@ -554,9 +557,21 @@ async function exportVideo() {
   setStatus(`Exported (${(blob.size / 1024 / 1024).toFixed(1)} MB).`, 'success');
 
   src.pause();
-  src.loop = wasLooping;
-  src.currentTime = 0;
-  src.play().catch(() => {});
+  src.removeAttribute('src');
+  src.load();
+}
+
+function createExportVideoElement() {
+  return new Promise((resolve, reject) => {
+    const exportVideo = document.createElement('video');
+    exportVideo.src = state.sourceUrl;
+    exportVideo.muted = false;
+    exportVideo.playsInline = true;
+    exportVideo.preload = 'auto';
+    exportVideo.crossOrigin = 'anonymous';
+    exportVideo.onloadedmetadata = () => resolve(exportVideo);
+    exportVideo.onerror = () => reject(new Error('Unable to load video for export'));
+  });
 }
 
 function seekVideo(videoEl, time) {
