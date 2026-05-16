@@ -553,7 +553,7 @@ async function exportVideo() {
   const extension = (mimeType.includes('mp4') ? 'mp4' : 'webm');
   const blob = new Blob(chunks, { type: mimeType || 'video/webm' });
   const filename = makeFilename(extension);
-  await deliverFile(blob, filename);
+  await deliverFile(blob, filename, { downloadMessage: 'If the share sheet did not open, the video download is in the Files app Downloads folder.' });
   setStatus(`Exported (${(blob.size / 1024 / 1024).toFixed(1)} MB).`, 'success');
 
   src.pause();
@@ -565,7 +565,7 @@ function createExportVideoElement() {
   return new Promise((resolve, reject) => {
     const exportVideo = document.createElement('video');
     exportVideo.src = state.sourceUrl;
-    exportVideo.muted = false;
+    exportVideo.muted = true;
     exportVideo.playsInline = true;
     exportVideo.preload = 'auto';
     exportVideo.crossOrigin = 'anonymous';
@@ -625,6 +625,9 @@ async function deliverFile(blob, filename, options = {}) {
   }
 
   downloadBlob(blob, filename);
+  if (options.downloadMessage) {
+    setStatus(options.downloadMessage);
+  }
 }
 
 async function downloadBlob(blob, filename) {
