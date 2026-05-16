@@ -360,10 +360,29 @@ async function exportImages() {
     return;
   }
 
+  const files = [];
+
   for (let i = 0; i < state.files.length; i += 1) {
     setStatus(`Exporting photo ${i + 1} of ${state.files.length}...`);
     const { blob, filename } = await renderImageFile(state.files[i]);
-    await deliverFile(blob, filename, { share: false });
+    files.push(new File([blob], filename, { type: blob.type }));
+  }
+
+  if (navigator.canShare?.({ files })) {
+    try {
+      await navigator.share({ files, title: `EasyFrame ${files.length} photos` });
+      setStatus(`Exported ${files.length} photos.`, 'success');
+      return;
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        setStatus('Export cancelled.');
+        return;
+      }
+    }
+  }
+
+  for (const file of files) {
+    await downloadBlob(file, file.name);
   }
 
   setStatus(`Exported ${state.files.length} photos.`, 'success');
@@ -590,6 +609,11 @@ async function deliverFile(blob, filename, options = {}) {
     }
   }
 
+  const url = URL.createObjectURL(blob);
+  downloadBlob(blob, filename);
+}
+
+async function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
