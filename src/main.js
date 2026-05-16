@@ -500,7 +500,7 @@ async function exportVideo() {
 
   // Pick the best supported mime type
   const candidates = [
-    'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
+    'video/mp4;codecs="avc1.42E01E,mp4a.40.2"',
     'video/mp4;codecs=h264',
     'video/mp4',
     'video/webm;codecs=vp9,opus',
@@ -614,7 +614,7 @@ function getSelectionSummary() {
 async function deliverFile(blob, filename, options = {}) {
   const file = new File([blob], filename, { type: blob.type });
 
-  if (options.share !== false && navigator.canShare?.({ files: [file] })) {
+  if (options.share !== false && navigator.share) {
     try {
       await navigator.share({ files: [file], title: filename });
       return;
@@ -624,7 +624,6 @@ async function deliverFile(blob, filename, options = {}) {
     }
   }
 
-  const url = URL.createObjectURL(blob);
   downloadBlob(blob, filename);
 }
 
