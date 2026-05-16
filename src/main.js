@@ -33,6 +33,7 @@ const typedText = $('typedText');
 const fileInput = $('fileInput');
 const canvas = $('previewCanvas');
 const video = $('previewVideo');
+const canvasStage = document.querySelector('.canvas-stage');
 const batchPreview = $('batchPreview');
 const ratioGrid = $('ratioGrid');
 const colorRow = document.querySelector('.color-row');
@@ -233,6 +234,7 @@ function renderPreview() {
   if (!srcW || !srcH) return;
 
   const frame = computeFrame(srcW, srcH);
+  canvasStage.style.setProperty('--preview-ratio', frame.canvasW / frame.canvasH);
 
   // For preview we cap dimensions so we're not painting 8000px canvases every frame
   const maxPreview = 1400;
@@ -303,6 +305,7 @@ resetBtn.addEventListener('click', () => {
   state.files = [];
   state.source = null;
   state.type = null;
+  canvasStage.style.setProperty('--preview-ratio', '1');
   selectionSummary.textContent = 'Adjust the final canvas without cropping your original media.';
   editor.hidden = true;
   landing.hidden = false;

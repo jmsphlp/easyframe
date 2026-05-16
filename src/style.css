@@ -309,7 +309,7 @@ label[for="fileInput"] {
 
 .canvas-stage {
   width: 100%;
-  aspect-ratio: 1;
+  aspect-ratio: var(--preview-ratio, 1);
   max-height: 75vh;
   display: flex;
   align-items: center;
@@ -541,6 +541,7 @@ label[for="fileInput"] {
 .ratio-four-five { width: 20px; height: 25px; }
 .ratio-three-four { width: 21px; height: 28px; }
 .ratio-nine-sixteen { width: 16px; height: 28px; }
+.ratio-ig-landscape { width: 30px; height: 16px; }
 .ratio-sixteen-nine { width: 28px; height: 16px; }
 .ratio-three-two { width: 28px; height: 19px; }
 .ratio-two-three { width: 19px; height: 28px; }
