@@ -2,8 +2,8 @@
   "name": "EasyFrame — Borders for photos & videos",
   "short_name": "EasyFrame",
   "description": "Add clean borders to your photos and videos without cropping. Runs entirely on your device.",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": ".",
+  "scope": ".",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#0e0e0e",
@@ -11,26 +11,26 @@
   "categories": ["photo", "graphics", "utilities"],
   "icons": [
     {
-      "src": "/icons/icon-192.png",
+      "src": "icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-maskable-512.png",
+      "src": "icons/icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     }
   ],
   "share_target": {
-    "action": "/",
+    "action": ".",
     "method": "POST",
     "enctype": "multipart/form-data",
     "params": {

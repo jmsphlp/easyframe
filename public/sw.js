@@ -1,13 +1,11 @@
 /* EasyFrame service worker - offline-first app shell */
-const VERSION = 'easyframe-v1';
+const VERSION = 'easyframe-v2';
 const APP_SHELL = [
-  '/',
-  '/index.html',
-  '/src/style.css',
-  '/src/main.js',
-  '/manifest.webmanifest',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
+  './',
+  './index.html',
+  './manifest.webmanifest',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
 ];
 
 self.addEventListener('install', (event) => {
@@ -34,7 +32,7 @@ self.addEventListener('fetch', (event) => {
         const copy = res.clone();
         caches.open(VERSION).then((c) => c.put(request, copy));
         return res;
-      }).catch(() => caches.match('/index.html'))
+      }).catch(() => caches.match('./index.html'))
     );
     return;
   }
