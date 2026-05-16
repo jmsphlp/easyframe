@@ -1,12 +1,13 @@
-"""Generate Frameit PWA icons.
+"""Generate EasyFrame PWA icons.
 
-Aesthetic: dark warm background (#0e0e0e) with the brand ▢ glyph in warm amber.
+Aesthetic: dark warm background (#0e0e0e) with the brand square glyph in warm amber.
 For maskable, we keep the glyph within the 80% safe zone.
 """
 from PIL import Image, ImageDraw, ImageFont
 import os
 
-OUT = "/home/claude/frameit/public/icons"
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUT = os.path.join(ROOT, "public", "icons")
 os.makedirs(OUT, exist_ok=True)
 
 BG = (14, 14, 14)
@@ -45,7 +46,7 @@ def make_icon(size: int, path: str, maskable: bool = False, ios: bool = False) -
     print(f"  wrote {path}  ({size}x{size})")
 
 
-print("Generating Frameit icons…")
+print("Generating EasyFrame icons...")
 make_icon(192, f"{OUT}/icon-192.png")
 make_icon(512, f"{OUT}/icon-512.png")
 make_icon(180, f"{OUT}/icon-180.png", ios=True)

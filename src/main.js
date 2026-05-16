@@ -26,6 +26,10 @@ const qualitySettings = {
   small: { imageType: 'image/jpeg', imageQuality: 0.82, imageExt: 'jpg', videoBitrate: 4_000_000 },
 };
 
+// iOS Safari can return null from canvas.toBlob() for very large canvases.
+// Keep exports high-resolution but below common mobile canvas memory limits.
+const MAX_IMAGE_EXPORT_SIDE = 4096;
+
 // ---------- DOM ----------
 const $ = (id) => document.getElementById(id);
 const landing = $('landing');
@@ -193,8 +197,6 @@ function computeFrame(srcW, srcH) {
     const [w, h] = state.ratio.split(':').map(Number);
     targetRatio = w / h;
   }
-
-  const srcRatio = srcW / srcH;
 
   // Start with a canvas that fits the source plus border on the shorter axis
   const shorter = Math.min(srcW, srcH);
@@ -453,19 +455,31 @@ async function renderImageBlob(image) {
   const srcW = image.naturalWidth;
   const srcH = image.naturalHeight;
   const frame = computeFrame(srcW, srcH);
+  const exportScale = Math.min(1, MAX_IMAGE_EXPORT_SIDE / Math.max(frame.canvasW, frame.canvasH));
 
   // Full-resolution offscreen canvas
   const out = document.createElement('canvas');
-  out.width = frame.canvasW;
-  out.height = frame.canvasH;
+  out.width = Math.max(1, Math.round(frame.canvasW * exportScale));
+  out.height = Math.max(1, Math.round(frame.canvasH * exportScale));
   const octx = out.getContext('2d');
 
   octx.fillStyle = state.color;
   octx.fillRect(0, 0, out.width, out.height);
-  octx.drawImage(image, frame.offsetX, frame.offsetY, srcW, srcH);
+  octx.drawImage(
+    image,
+    frame.offsetX * exportScale,
+    frame.offsetY * exportScale,
+    srcW * exportScale,
+    srcH * exportScale
+  );
 
   const quality = qualitySettings[state.quality];
-  return await new Promise((res) => out.toBlob(res, quality.imageType, quality.imageQuality));
+  const blob = await new Promise((res) => out.toBlob(res, quality.imageType, quality.imageQuality));
+  if (!blob) {
+    throw new Error('Export failed because this image is too large for this browser. Try Balanced or Smaller quality.');
+  }
+
+  return blob;
 }
 
 async function exportVideo() {
