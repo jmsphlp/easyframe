@@ -7,7 +7,7 @@ Inspired by [Simple Border](https://simpleborder.app/), built as a zero-cost web
 ## What it does
 
 - Photo and video borders without cropping (adds pixels instead)
-- Aspect ratios: Original, 1:1, Instagram Portrait (4:5), 3:4, 9:16, Instagram Landscape (1.91:1), 16:9, 3:2, 2:3
+- Aspect ratios: Original, 1:1, Instagram Portrait (4:5), Instagram Landscape (1.91:1), 9:16, 16:9, 3:2, 2:3
 - Custom border color (presets + native color picker)
 - Variable border thickness
 - Batch photo export with clickable previews; videos are single-file only

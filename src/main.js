@@ -43,7 +43,7 @@ const slider = $('borderSlider');
 const borderValue = $('borderValue');
 const qualityGrid = $('qualityGrid');
 const exportBtn = $('exportBtn');
-const shareBtn = $('shareBtn');
+const openExportLink = $('openExportLink');
 const resetBtn = $('resetBtn');
 const installBtn = $('installBtn');
 const selectionSummary = $('selectionSummary');
@@ -316,6 +316,7 @@ resetBtn.addEventListener('click', () => {
   fileInput.value = '';
   batchPreview.replaceChildren();
   batchPreview.hidden = true;
+  clearOpenExportLink();
   setStatus('');
 });
 
@@ -341,6 +342,7 @@ exportBtn.addEventListener('click', async () => {
   if (!state.source || state.exporting) return;
   state.exporting = true;
   setExporting(true);
+  clearOpenExportLink();
   try {
     if (state.type === 'image') {
       await exportImages();
@@ -554,7 +556,10 @@ async function exportVideo() {
   const extension = (mimeType.includes('mp4') ? 'mp4' : 'webm');
   const blob = new Blob(chunks, { type: mimeType || 'video/webm' });
   const filename = makeFilename(extension);
-  await deliverFile(blob, filename, { downloadMessage: 'If the share sheet did not open, the video download is in the Files app Downloads folder.' });
+  await deliverFile(blob, filename, {
+    openLabel: 'Open video',
+    downloadMessage: 'If the share sheet did not open, tap Open video, then Share, then Save Video.',
+  });
   setStatus(`Exported (${(blob.size / 1024 / 1024).toFixed(1)} MB).`, 'success');
 
   src.pause();
@@ -630,6 +635,8 @@ function getSelectionSummary() {
 // fall back to a download anchor.
 async function deliverFile(blob, filename, options = {}) {
   const file = new File([blob], filename, { type: blob.type });
+  const objectUrl = URL.createObjectURL(blob);
+  setOpenExportLink(objectUrl, filename, options.openLabel || 'Open export');
 
   if (options.share !== false && navigator.share) {
     try {
@@ -656,6 +663,25 @@ async function downloadBlob(blob, filename) {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+let openExportUrl = '';
+
+function setOpenExportLink(url, filename, label) {
+  clearOpenExportLink();
+  openExportUrl = url;
+  openExportLink.href = url;
+  openExportLink.download = filename;
+  openExportLink.textContent = label;
+  openExportLink.hidden = false;
+}
+
+function clearOpenExportLink() {
+  if (openExportUrl) URL.revokeObjectURL(openExportUrl);
+  openExportUrl = '';
+  openExportLink.removeAttribute('href');
+  openExportLink.removeAttribute('download');
+  openExportLink.hidden = true;
 }
 
 // ---------- UI helpers ----------
