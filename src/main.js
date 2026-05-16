@@ -152,7 +152,7 @@ async function loadFile(file, files = [file]) {
     renderBatchPreview();
   } else {
     video.src = url;
-    video.hidden = false;
+    video.hidden = true;
     canvas.hidden = false;
     await new Promise((res) => {
       video.onloadedmetadata = res;
@@ -448,6 +448,7 @@ async function exportVideo() {
   const srcW = src.videoWidth;
   const srcH = src.videoHeight;
   const frame = computeFrame(srcW, srcH);
+  const wasLooping = src.loop;
 
   setStatus('Encoding video…');
 
@@ -461,10 +462,15 @@ async function exportVideo() {
   // Audio from original
   const audioTracks = src.captureStream ? src.captureStream().getAudioTracks() : [];
 
-  // Restart video for clean export pass
+  // Restart video for clean export pass. Setting currentTime to 0 while already
+  // at 0 does not always fire seeked, so only wait when a seek is needed.
   src.pause();
-  src.currentTime = 0;
-  await new Promise((r) => (src.onseeked = r));
+  src.loop = false;
+  if (src.currentTime > 0.05) {
+    await seekVideo(src, 0);
+  } else {
+    src.currentTime = 0;
+  }
 
   const fps = 30;
   const videoStream = out.captureStream(fps);
@@ -490,9 +496,10 @@ async function exportVideo() {
   recorder.start(100);
 
   // Drive playback + paint frames
-  src.play();
+  await src.play();
 
   let lastT = -1;
+  let lastProgress = -1;
   await new Promise((resolve) => {
     const draw = () => {
       if (src.ended) {
@@ -504,6 +511,14 @@ async function exportVideo() {
         octx.fillRect(0, 0, out.width, out.height);
         octx.drawImage(src, frame.offsetX, frame.offsetY, srcW, srcH);
         lastT = src.currentTime;
+
+        if (src.duration) {
+          const progress = Math.min(99, Math.floor((src.currentTime / src.duration) * 100));
+          if (progress !== lastProgress && progress % 5 === 0) {
+            setStatus(`Encoding video... ${progress}%`);
+            lastProgress = progress;
+          }
+        }
       }
       requestAnimationFrame(draw);
     };
@@ -520,8 +535,30 @@ async function exportVideo() {
   setStatus(`Exported (${(blob.size / 1024 / 1024).toFixed(1)} MB).`, 'success');
 
   src.pause();
+  src.loop = wasLooping;
   src.currentTime = 0;
   src.play().catch(() => {});
+}
+
+function seekVideo(videoEl, time) {
+  return new Promise((resolve, reject) => {
+    const cleanup = () => {
+      videoEl.removeEventListener('seeked', handleSeeked);
+      videoEl.removeEventListener('error', handleError);
+    };
+    const handleSeeked = () => {
+      cleanup();
+      resolve();
+    };
+    const handleError = () => {
+      cleanup();
+      reject(new Error('Unable to seek video'));
+    };
+
+    videoEl.addEventListener('seeked', handleSeeked, { once: true });
+    videoEl.addEventListener('error', handleError, { once: true });
+    videoEl.currentTime = time;
+  });
 }
 
 function makeFilename(ext, file = state.file) {
