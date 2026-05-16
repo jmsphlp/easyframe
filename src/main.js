@@ -468,6 +468,7 @@ async function renderImageBlob(image) {
 
 async function exportVideo() {
   const src = await createExportVideoElement();
+  const audioCapture = createSilentAudioCapture(src);
   const srcW = src.videoWidth;
   const srcH = src.videoHeight;
   const frame = computeFrame(srcW, srcH);
@@ -481,9 +482,9 @@ async function exportVideo() {
   out.height = frame.canvasH;
   const octx = out.getContext('2d');
 
-  // Audio from a separate unmuted source. The preview video stays muted.
-  const sourceStream = src.captureStream ? src.captureStream() : null;
-  const audioTracks = sourceStream?.getAudioTracks() || [];
+  // Audio is routed through Web Audio so it can be recorded without playing
+  // through the speakers during export.
+  const audioTracks = audioCapture.stream.getAudioTracks();
 
   // Restart video for clean export pass. Setting currentTime to 0 while already
   // at 0 does not always fire seeked, so only wait when a seek is needed.
@@ -557,6 +558,7 @@ async function exportVideo() {
   setStatus(`Exported (${(blob.size / 1024 / 1024).toFixed(1)} MB).`, 'success');
 
   src.pause();
+  audioCapture.close();
   src.removeAttribute('src');
   src.load();
 }
@@ -565,13 +567,28 @@ function createExportVideoElement() {
   return new Promise((resolve, reject) => {
     const exportVideo = document.createElement('video');
     exportVideo.src = state.sourceUrl;
-    exportVideo.muted = true;
+    exportVideo.muted = false;
     exportVideo.playsInline = true;
     exportVideo.preload = 'auto';
     exportVideo.crossOrigin = 'anonymous';
     exportVideo.onloadedmetadata = () => resolve(exportVideo);
     exportVideo.onerror = () => reject(new Error('Unable to load video for export'));
   });
+}
+
+function createSilentAudioCapture(videoEl) {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return { stream: new MediaStream(), close: () => {} };
+
+  const audioContext = new AudioContextClass();
+  const source = audioContext.createMediaElementSource(videoEl);
+  const destination = audioContext.createMediaStreamDestination();
+  source.connect(destination);
+
+  return {
+    stream: destination.stream,
+    close: () => audioContext.close().catch(() => {}),
+  };
 }
 
 function seekVideo(videoEl, time) {
